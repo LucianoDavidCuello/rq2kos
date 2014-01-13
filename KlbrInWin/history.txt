@@ -1,0 +1,14 @@
+Русский текст (cp866) ниже.
+31.12.2007	This file was created.
+31.12.2007	Support for direct graphics access with [gs:N]
+		and function 61.
+10.01.2008	Small bugfix in thread creation; small corrections in
+		config dialog.
+
+English text above.
+31.12.2007	Создан этот файл.
+31.12.2007	Поддержка прямого доступа к графическому экрану через gs
+		и функции 61.
+10.01.2008	Мелкий багфикс при создании потоков: раньше если родитель
+		сразу же после создания завершался, это могло вызвать
+		завершение всего процесса; мелкие исправления в диалоге config.

@@ -1,0 +1,1092 @@
+$Include "Rapidq.inc"
+
+declare sub main
+declare sub codigo
+declare sub busca (a$)
+declare sub varobjeto
+declare sub cabecera
+declare sub botones
+declare sub drawwin
+declare sub forms
+declare  function tipovar$ (a$) as string
+
+
+type kdata
+tipo as integer
+nombre as string * 255
+id as string * 2
+parent as string * 255
+bmp as string * 255
+bmpc as string *2
+top as string * 3
+left as string * 3
+height as string * 3
+width as string * 3
+caption as string * 255
+onclick as string * 255
+onkeypress as string * 255
+onmousemove as string * 255
+checked as string * 3 'checked...
+style as string * 3
+color1 as string * 8
+color2 as string * 8
+visible as string * 3
+end type
+
+type tktxt
+nombre as string * 255
+tipo as integer
+dato as string * 255
+l as integer
+end type
+
+type tkvar
+nombre as string * 255
+tipo as integer
+form as integer
+end type
+
+' tipo: 1=texto, 2=integer
+' 10=form , 11=boton , 12=label, 13=edit
+' 14=ckeckboton, 15=radioboton, 16=panel
+' 17=groupbox
+dim variable1$
+dim variable2$
+dim sielse as integer
+sielese = 0
+dim variable3$
+dim operador1$
+dim operador2$
+dim operacion$
+dim kvar(1000) as tkvar
+dim ckvar as integer
+dim ktxt(500) as tktxt
+dim cktxt as integer
+
+dim kform(200) as kdata
+dim ckform as integer
+dim kboton(200) as kdata
+dim ckboton as integer
+dim klabel(200) as kdata
+dim cklabel as integer
+dim kedit(200) as kdata
+dim ckedit as integer
+dim kcheck(200) as kdata
+dim ckcheck as integer
+dim kradio(200) as kdata
+dim ckradio as integer
+dim kpanel(200) as kdata
+dim ckpanel as integer
+dim kgroupbox(200) as kdata
+dim ckgroupbox as integer
+dim kcombobox(200) as kdata
+dim ckcombobox as integer
+DIM klistbox(200) as kdata
+dim cklistbox as integer
+dim linea$ 'linea leida de archivo
+dim csub as integer
+dim cif as integer
+cif = 0
+dim cifa as integer
+cifa = 0
+dim cfor as integer
+cfor = 0
+dim sif(1000) as integer
+csub = 0
+ckboton = 0
+cklabel = 0
+ckedit = 0
+ckform = 0
+ckcheck = 0
+ckradio = 0
+ckpanel = 0
+ckgroupbox = 0
+ckcombobox = 0
+ckvar = 0
+cktxt = 0
+
+dim filebas as qfilestream
+dim fileasm as qfilestream
+
+
+ 
+Declare Sub Button1_1Click(Sender as QButton)
+Declare Sub Button1_2Click(Sender as QButton)
+Create MainForm as QForm
+      Caption = "MainForm"
+      Top     = 140
+      Left    = 278
+      Width   = 238
+      Height  = 369
+End Create
+Create Button1_1 as QButton
+      Parent  = MainForm
+      Top     = 64
+      Left    = 48
+      Width   = 123
+      Height  = 25
+      Caption = "Generar codigo"
+      OnClick = Button1_1Click
+End Create
+Create ListBox1_1 as QListBox
+      Parent  = MainForm
+      Top     = 179
+      Left    = 0
+      Width   = 230
+      Height  = 163
+      Color   = &HFFFFFF
+      Align = alBottom
+End Create
+Create Edit1_1 as QEdit
+      Parent  = MainForm
+      Top     = 16
+      Left    = 48
+      Width   = 121
+      Height  = 21
+      Text    = "a.bas"
+      Color   = &HFFFFFF
+End Create
+Create Edit1_2 as QEdit
+      Parent  = MainForm
+      Top     = 40
+      Left    = 48
+      Width   = 121
+      Height  = 21
+      Text    = "a.asm"
+      Color   = &HFFFFFF
+End Create
+Create Button1_2 as QButton
+      Parent  = MainForm
+      Top     = 88
+      Left    = 48
+      Width   = 123
+      Height  = 25
+      Caption = "Compilar (FASM)"
+      OnClick = Button1_2Click
+End Create
+Create Label1_1 as QLabel
+      Parent  = MainForm
+      Top     = 24
+      Left    = 32
+      Width   = 9
+      Height  = 13
+      Caption = "In"
+      Color   = &HF0F0F0
+End Create
+Create Label1_2 as QLabel
+      Parent  = MainForm
+      Top     = 48
+      Left    = 24
+      Width   = 17
+      Height  = 13
+      Caption = "Out"
+      Color   = &HF0F0F0
+End Create
+Create Image1_1 as QImage
+      Parent  = MainForm
+      Top     = 0
+      Left    = 48
+      Width   = 142
+      Height  = 189
+      BMP = "C:\rq2kos\logo.bmp"
+      AutoSize = True
+      Center = True
+      Transparent = True
+      Stretch = True
+End Create
+
+
+
+MainForm.ShowModal
+ 
+Sub Button1_1Click(Sender as QButton)
+main
+'Code here....
+End Sub
+
+'/// M A I N
+'/// Aqui
+
+
+sub main
+busca "dim"
+busca "objeto"
+
+if fileexists(edit1_2.Text) then kill edit1_2.text
+fileasm.Open(edit1_2.Text, fmcreate)
+
+cabecera
+drawwin
+fileasm.Close
+end sub
+
+
+
+
+sub busca (a$)
+select case a$
+
+
+case "dim"
+filebas.Open ( edit1_1.Text , 0 )
+listbox1_1.AddItems "Busca Dims (Variables)"
+do
+linea$ = filebas.ReadLine
+'listbox1_1.AddItems linea$
+if field$ ( ucase$ ( linea$ ) , " " , 1 )= "DIM" then
+ckvar = ckvar + 1
+listbox1_1.AddItems "Variable -->" + field$( linea$," ",2 )
+kvar( ckvar ).nombre = field$( linea$ , " " , 2 )
+if tally ( field$ ( linea$, " " , 2 ) , "$" ) > 1 then kvar( ckvar ).tipo = 1
+
+
+if ucase$( field$ ( linea$, " " , 3 )) = "AS" then
+select case field$ ( linea$, " " , 4 ) 'tipo de variable dim
+
+case "INTEGER" OR "integer"
+ kvar( ckvar ).tipo = 2
+
+case else
+ kvar( ckvar ).tipo = 2
+end select
+
+end if
+end if
+loop until filebas.eof
+filebas.close
+
+case "objeto"
+filebas.Open ( edit1_1.Text , 0 )
+listbox1_1.AddItems "Busca objetos"
+do
+linea$ = filebas.ReadLine
+
+if field$ ( ucase$ ( linea$ ) , " " , 1 )= "CREATE" then
+ckvar = ckvar + 1
+listbox1_1.AddItems "Objeto -->" + field$( linea$," ",2 )
+kvar( ckvar ).nombre = lcase$(field$( linea$ , " " , 2 ))
+ckform = ckform + 1
+kvar( ckvar ).form = ckform
+' tipo: 1=texto, 2=integer
+' 10=form , 11=boton , 12=label, 13=edit
+' 14=ckeckboton, 15=radioboton, 16=panel
+' 17=groupbox, 18=LISTBOX, 19=COMBOBOX
+if  field$ ( ucase$ ( linea$ ) , " " , 4 ) = "QFORM"   then kvar( ckvar ).tipo = 10
+if  field$ ( ucase$ ( linea$ ) , " " , 4 ) = "QBUTTON" then kvar( ckvar ).tipo = 11:ckboton++
+if  field$ ( ucase$ ( linea$ ) , " " , 4 ) = "QLABEL"  then kvar( ckvar ).tipo = 12:cklabel++
+if  field$ ( ucase$ ( linea$ ) , " " , 4 ) = "QEDIT"  then kvar( ckvar ).tipo = 13:ckedit++
+if  field$ ( ucase$ ( linea$ ) , " " , 4 ) = "QCHECKBOX"  then kvar( ckvar ).tipo = 14:ckcheck++
+if  field$ ( ucase$ ( linea$ ) , " " , 4 ) = "QRADIOBUTTON"  then kvar( ckvar ).tipo = 15:ckradio++
+if  field$ ( ucase$ ( linea$ ) , " " , 4 ) = "QPANEL"  then kvar( ckvar ).tipo = 16:ckpanel++
+if  field$ ( ucase$ ( linea$ ) , " " , 4 ) = "QGROUPBOX" then kvar( ckvar ).tipo = 17:ckgroupbox++
+if  field$ ( ucase$ ( linea$ ) , " " , 4 ) = "QLISTBOX"  then kvar( ckvar ).tipo = 18:cklistbox++
+if  field$ ( ucase$ ( linea$ ) , " " , 4 ) = "QCOMBOBOX" then kvar( ckvar ).tipo = 19 :ckcombobox++
+listbox1_1.AddItems "Tipo :"+ str$ ( kvar( ckvar ).tipo )
+kform(ckform).tipo = kvar( ckvar ).tipo
+kform(ckform).nombre= kvar( ckvar ).nombre
+kform(ckform).id=ckform
+kform(ckform).visible = "1"
+kform(ckform).style = "1"
+kform(ckform).parent = kform(ckform).nombre
+varobjeto
+end if
+
+loop until filebas.eof
+filebas.close
+
+case "sub"
+
+filebas.Open ( edit1_1.Text , 0 )
+listbox1_1.AddItems "Busca SubRutinas (Sub's)"
+do
+linea$ = filebas.ReadLine
+'listbox1_1.AddItems linea$
+if csub=1 then codigo
+if field$ ( ucase$ ( linea$ ) , " " , 1 )= "SUB" then
+csub =  1
+d$=REPLACESUBSTR$(field$(linea$," ",2),"("," ")
+listbox1_1.AddItems "Subrutina >" + field$(d$," ",1)
+fileasm.WriteLine field$(d$," ",1)+":"
+end if
+
+
+
+if ucase$ ( rtrim$ ( ltrim$ ( linea$ ) ) ) = "END SUB" then
+fileasm.WriteLine "     jmp red"
+csub = 0
+end if
+
+loop until filebas.eof
+filebas.close
+
+end select
+
+end sub
+
+sub varobjeto
+do
+linea$ = filebas.ReadLine
+if tally ( "END CREATE", UCASE$ ( linea$ ) ) > 0 then exit do
+listbox1_1.AddItems "Propiedades :" + REPLACESUBSTR$(field$(linea$,"=",2),CHR$(34),"")
+
+select case ucase$(ltrim$(rtrim$(field$(linea$,"=",1))))
+case "PARENT"
+kform(ckform).parent = ltrim$(rtrim$(field$(linea$,"=",2)))
+CASE "BMP"
+kform(ckform).bmp= ltrim$(rtrim$(field$(linea$,"=",2)))
+CASE "NUMBMPS"
+kform(ckform).bmpc= ltrim$(rtrim$(field$(linea$,"=",2)))
+CASE "TOP"
+kform(ckform).top= ltrim$(rtrim$(field$(linea$,"=",2)))
+CASE "LEFT"
+kform(ckform).left= ltrim$(rtrim$(field$(linea$,"=",2)))
+CASE "HEIGHT"
+kform(ckform).height= ltrim$(rtrim$(field$(linea$,"=",2)))
+CASE "WIDTH"
+kform(ckform).width= ltrim$(rtrim$(field$(linea$,"=",2)))
+CASE "CAPTION"
+kform(ckform).caption= REPLACESUBSTR$(field$(linea$,"=",2),CHR$(34),"")
+CASE "TEXT"
+kform(ckform).caption= REPLACESUBSTR$(field$(linea$,"=",2),CHR$(34),"")
+
+case "ONCLICK"
+kform(ckform).onclick= ltrim$(rtrim$(field$(linea$,"=",2)))
+CASE "ONKEYPRESS"
+kform(ckform).onkeypress= ltrim$(rtrim$(field$(linea$,"=",2)))
+CASE "ONMOUSEMOVE"
+kform(ckform).onmousemove= ltrim$(rtrim$(field$(linea$,"=",2)))
+CASE "CHECKED"
+kform(ckform).checked="0"
+
+if ucase$(ltrim$(rtrim$(field$(linea$,"=",2)))) = "TRUE" then kform(ckform).checked="1"
+if ucase$(ltrim$(rtrim$(field$(linea$,"=",2)))) = "1" then kform(ckform).checked="1"
+if ucase$(ltrim$(rtrim$(field$(linea$,"=",2)))) = "FALSE" then kform(ckform).checked="0"
+if ucase$(ltrim$(rtrim$(field$(linea$,"=",2)))) = "0" then kform(ckform).checked="0"
+CASE "STYLE"
+kform(ckform).style= ltrim$(rtrim$(field$(linea$,"=",2)))
+CASE "COLOR"
+kform(ckform).color1= ltrim$(rtrim$(field$(linea$,"=",2)))
+CASE "VISIBLE"
+if ucase$(ltrim$(rtrim$(field$(linea$,"=",2)))) = "FALSE" THEN kform(ckform).VISIBLE="0"
+if ucase$(ltrim$(rtrim$(field$(linea$,"=",2)))) = "0" THEN kform(ckform).VISIBLE="0"
+
+END SELECT
+loop
+
+end sub
+
+
+SUB cabecera
+fileasm.WriteLine "; KBAS Kolibrios"
+fileasm.WriteLine "; Autor: NeoTEC 2008  - Luciano David Cuello -santa fe- ARGENTINA "
+fileasm.WriteLine "; Mail: jackerscomp2002@yahoo.com.ar"
+fileasm.WriteLine "; Compilar con FASM para Kolibri OS "
+fileasm.WriteLine ""
+fileasm.WriteLine "include 'rq2kos.inc'"
+fileasm.WriteLine ""
+
+fileasm.WriteLine "use32"
+fileasm.WriteLine "  meos_app_start"
+if ckedit > 0 then fileasm.WriteLine "include 'editbox.inc'"
+if ckcheck > 0 then
+ fileasm.WriteLine "include 'check.inc'"
+ fileasm.WriteLine "  version_ch1 "
+ fileasm.WriteLine "  use_check_box "
+end if
+if ckedit > 0 then fileasm.WriteLine "  use_edit_box procinfo,22,5"
+if ckradio > 0 then
+
+fileasm.WriteLine "   include 'optionbox.inc'"
+fileasm.WriteLine "   version_op"
+fileasm.WriteLine "   use_option_box"
+
+end if
+fileasm.WriteLine "  align 4"
+fileasm.WriteLine "code"
+fileasm.WriteLine "     mov eax,48"
+fileasm.WriteLine "     mov ebx,3"
+fileasm.WriteLine "     mov ecx,sc"
+fileasm.WriteLine "     mov edx, sizeof.system_colors"
+fileasm.WriteLine "     mcall"
+fileasm.WriteLine ""
+fileasm.WriteLine "     mov eax, 40"
+fileasm.WriteLine "     mov ebx,0x25"
+fileasm.WriteLine "     mcall"
+
+fileasm.WriteLine "	mcall	40,0x27"
+fileasm.WriteLine ""
+fileasm.WriteLine "call iniaplicacion"
+fileasm.WriteLine "START:"
+fileasm.WriteLine "     call draw_window"
+fileasm.WriteLine "still:"
+fileasm.WriteLine ""
+fileasm.WriteLine "    mcall  10                 ; wait here for event"
+fileasm.WriteLine ""
+fileasm.WriteLine "    cmp  eax,1                  ; redraw request ?"
+fileasm.WriteLine "    je red"
+fileasm.WriteLine "    cmp  eax,2                  ; key in buffer ?"
+fileasm.WriteLine "    je   key"
+fileasm.WriteLine "    cmp  eax,3                  ; button in buffer ?"
+fileasm.WriteLine "    je button"
+fileasm.WriteLine ""
+
+for t = 1 to ckform
+d$=rtrim$(kform(t).nombre)
+select case kform(t).tipo
+' 10=form , 11=boton , 12=label, 13=edit
+' 14=ckeckboton, 15=radioboton, 16=panel
+' 17=groupbox, 18=LISTBOX, 19=COMBOBOX
+
+case 13
+
+fileasm.WriteLine "   mouse_edit_boxes ini_"+d$+",end_"+d$
+fileasm.WriteLine ""
+case 14
+
+fileasm.WriteLine "   mouse_check_boxes ini_"+d$+",end_"+d$
+fileasm.WriteLine ""
+case 15
+
+fileasm.WriteLine "   mouse_option_boxes ini_"+d$+",end_"+d$
+fileasm.WriteLine ""
+
+
+end select
+
+next t
+
+
+
+fileasm.WriteLine "    jmp still"
+fileasm.WriteLine ""
+fileasm.WriteLine "  red:                          ; redraw"
+fileasm.WriteLine "    call draw_window"
+fileasm.WriteLine "    jmp still"
+fileasm.WriteLine ""
+fileasm.WriteLine "  key:                          ; key"
+fileasm.WriteLine "    mcall 2                  ; just read it and ignore"
+for t = 1 to ckform
+d$=rtrim$(kform(t).nombre)
+select case kform(t).tipo
+' 10=form , 11=boton , 12=label, 13=edit
+' 14=ckeckboton, 15=radioboton, 16=panel
+' 17=groupbox, 18=LISTBOX, 19=COMBOBOX
+
+case 13
+
+fileasm.WriteLine "   key_edit_boxes ini_"+d$+",end_"+d$
+fileasm.WriteLine ""
+case 14
+
+fileasm.WriteLine "   key_check_boxes ini_"+d$+",end_"+d$
+fileasm.WriteLine ""
+case 15
+
+fileasm.WriteLine "   key_option_boxes ini_"+d$+",end_"+d$
+fileasm.WriteLine ""
+
+
+end select
+
+next t
+
+fileasm.WriteLine "    jmp still"
+fileasm.WriteLine ""
+fileasm.WriteLine "  button:                       ; button"
+fileasm.WriteLine "    mcall 17                 ; get id"
+fileasm.WriteLine ""
+fileasm.WriteLine "    cmp  ah,1                   ; button id=1 ?"
+fileasm.WriteLine "    jne noclose"
+fileasm.WriteLine ""
+fileasm.WriteLine "    mcall -1                 ; close this program"
+
+fileasm.WriteLine "noclose:"
+fileasm.WriteLine ""
+botones
+busca "sub"
+fileasm.WriteLine "jmp still"
+end sub
+
+sub botones
+for t=1 to ckvar
+if kvar(t).tipo = 11 then
+if lcase$(rtrim$(kform(kvar(t).form).onclick)) <> "" then
+fileasm.WriteLine "     cmp ah," + str$ (kform(kvar(t).form).id)
+fileasm.WriteLine "     je " + rtrim$(kform(kvar(t).form).onclick)
+end if
+end if
+next t
+fileasm.WriteLine "   jmp still"
+end sub
+
+
+sub drawwin
+fileasm.WriteLine ";"
+fileasm.WriteLine "draw_window:"
+fileasm.WriteLine " mcall 12,1"
+fileasm.WriteLine ";   Objetos: draw ptr objeto"
+for t = 1 to ckform
+d$=lcase$(rtrim$(kform(t).nombre))
+select case kform(t).tipo
+' 10=form , 11=boton , 12=label, 13=edit
+' 14=ckeckboton, 15=radioboton, 16=panel
+' 17=groupbox, 18=LISTBOX, 19=COMBOBOX
+
+case 10
+
+fileasm.WriteLine "   window "+d$+".top,"+d$+".left,"+d$+".width ,"+d$+".height,0x33AABBCC,0x805080DD,"+d$+".caption" 'hed"
+
+case 11
+fileasm.WriteLine "   boton "+d$+".left,"+d$+".top,"+d$+".width,"+d$+".height,"+d$+".id,"+d$+".caption,"+d$+".color,"+d$+".visible,"+lcase$(rtrim$(kform(t).parent))+".visible"
+case 12
+fileasm.WriteLine "   plabel "+d$+".left,"+d$+".top,"+d$+".caption,"+d$+".color,0"
+case 13
+fileasm.WriteLine ";edit box"
+fileasm.WriteLine "     mov eax,["+d$+".left]"
+fileasm.WriteLine "     mov ["+d$+"_a.left], eax"
+fileasm.WriteLine "     mov eax,["+d$+".top]"
+fileasm.WriteLine "     mov ["+d$+"_a.top], eax"
+fileasm.WriteLine "     mov eax,["+d$+".width]"
+fileasm.WriteLine "     mov ["+d$+"_a.width], eax"
+fileasm.WriteLine "   draw_edit_boxes ini_"+d$+",end_"+d$+",use_f9,procinfo"
+fileasm.WriteLine ""
+end select
+next t
+
+'if 'ckedit >0 then fileasm.WriteLine "   draw_edit_boxes editboxes,editboxes_end,use_f9,procinfo"
+fileasm.WriteLine " mcall 12,2"
+fileasm.WriteLine ";   Fin Draw"
+fileasm.WriteLine " ret"
+fileasm.WriteLine ""
+fileasm.WriteLine "; codigo despues de form, antes de draw"
+fileasm.WriteLine "iniaplicacion:"
+fileasm.WriteLine ""
+filebas.Open (edit1_1.Text,0)
+
+
+AVIL=0
+do
+
+linea$=filebas.ReadLine
+linea$=ltrim$(ucase$(linea$))
+IF tally (LINEa$,"CREATE") > 0 THEN
+AVIL=0
+DO
+linea$=filebas.ReadLine
+linea$=ltrim$(ucase$(linea$))
+IF tally (LINEa$,"END CREATE") > 0 THEN
+AVIL=1
+EXIT DO
+END IF
+LOOP
+END IF
+IF AVIL=1 THEN
+listbox1_1.AddItems "<--"+LINEa$+"-->"
+'linea$=filebas.ReadLine
+codigo
+END IF
+if ucase$(FIELD$(LINEa$," ",1))= "SUB" THEN EXIT DO
+if tally(ucase$(LINEa$),"SHOW") > 0 THEN EXIT DO
+
+listbox1_1.AddItems ">>>>"+LINEa$
+loop until filebas.eof
+
+
+
+filebas.close
+SUBC=0
+
+
+fileasm.WriteLine " ret"
+
+forms
+end sub
+
+sub forms
+fileasm.WriteLine ""
+fileasm.WriteLine "addr dd 0x0"
+fileasm.WriteLine "string_length dd 0x0"
+fileasm.WriteLine "temp1  dd  0"
+fileasm.WriteLine "temp2  dd  0"
+fileasm.WriteLine "ttemp1 db 0"
+fileasm.WriteLine "  rb  255"
+fileasm.WriteLine "ttemp2 db 0"
+fileasm.WriteLine "  rb  255"
+fileasm.WriteLine ""
+for t=1 to ckvar
+if kvar(t).tipo = 1 then fileasm.WriteLine lcase$(rtrim$(kvar(t).nombre))+"  db 0"
+if kvar(t).tipo = 2 then fileasm.WriteLine lcase$(rtrim$(kvar(t).nombre))+"  dd 0"
+next t
+
+for t = 1 to ckform
+fileasm.WriteLine lcase$(rtrim$(kform(t).nombre))+":"
+fileasm.WriteLine ".parent dw "+lcase$(rtrim$(kform(t).parent))
+fileasm.WriteLine ".id dw "+str$(kform(t).id)
+fileasm.WriteLine ".tipo dw "+str$ (rtrim$(kform(t).tipo))
+fileasm.WriteLine ".left dd "+rtrim$(kform(t).left)
+fileasm.WriteLine ".top dd "+rtrim$(kform(t).top)
+fileasm.WriteLine ".width dd "+rtrim$(kform(t).width)
+fileasm.WriteLine ".height dd "+rtrim$(kform(t).height)
+' 10=form , 11=boton , 12=label, 13=edit
+' 14=ckeckboton, 15=radioboton, 16=panel
+' 17=groupbox, 18=LISTBOX, 19=COMBOBOX
+
+select case kform(t).tipo
+case 19, 13
+fileasm.WriteLine ".text db '"+ltrim$(rtrim$(kform(t).caption))+"',0"
+fileasm.WriteLine "      rb 255-"+str$(len(rtrim$( kform(t).caption ) ) )
+case else
+fileasm.WriteLine ".caption db '"+ltrim$(rtrim$(kform(t).caption))+"',0"
+fileasm.WriteLine "      rb 255-"+str$(len(rtrim$( kform(t).caption ) ) )
+end select
+
+fileasm.WriteLine ".color dd 0xaabbcc"'+rtrim$(kform(t).VISIBLE)
+fileasm.WriteLine ".visible dw "+rtrim$(kform(t).VISIBLE)
+fileasm.WriteLine ".bmp db '"+rtrim$(kform(t).bmp)+"',0"
+fileasm.WriteLine "      rb 255-"+str$(len(rtrim$( kform(t).bmp ) ) )
+fileasm.WriteLine ".style dw "+rtrim$(kform(t).style)
+fileasm.writeline ";"
+
+
+next t
+
+
+
+for t = 1 to ckform
+if kvar(t).tipo=13 then
+fileasm.WriteLine ";edit"
+fileasm.WriteLine "ini_"+rtrim$(kform(kvar(t).form).nombre)+":"
+fileasm.WriteLine rtrim$(kform(kvar(t).form).nombre)+ "_a edit_box "+rtrim$(kform(kvar(t).form).nombre)+".top,"+rtrim$(kform(kvar(t).form).nombre)+".left,"+rtrim$(kform(kvar(t).form).nombre)+".width,0xffffff,0x6a9480,0,0xAABBCC,0,255,"+rtrim$(kform(kvar(t).form).nombre)+".text,0,"+str$(len(rtrim$(kform(kvar(t).form).caption)))+",0"
+fileasm.WriteLine "end_"+rtrim$(kform(kvar(t).form).nombre)+":"
+end if
+next t
+
+for t = 1 to ckform+1
+listbox1_1.AddItems str$(kvar(t).tipo)
+if kvar(t).tipo=14 then
+
+if val(kform(kvar(t).form).checked) = 1 then
+d$=".caption,ch_flag_en"
+else
+d$=".caption"
+end if
+fileasm.WriteLine ";check"
+fileasm.WriteLine "ini_"+rtrim$(kform(kvar(t).form).nombre)+":"
+fileasm.WriteLine rtrim$(kform(kvar(t).form).nombre)+ "_a check_box1 0,0,"+rtrim$(kform(kvar(t).form).nombre)+d$
+fileasm.WriteLine "end_"+rtrim$(kform(kvar(t).form).nombre)+":"
+end if
+next t
+FOR  t = 1 to cktxt
+fileasm.WriteLine "TEXTO_"+STR$(T)+"  db "+rtrim$(ktxt(t).dato)+",0"
+next t
+
+fileasm.WriteLine "data_of_code dd 0"
+fileasm.WriteLine "mouse_flag dd 0x0"
+fileasm.WriteLine ";fin"
+fileasm.WriteLine "sc system_colors"
+fileasm.WriteLine "align 16"
+fileasm.WriteLine "procinfo process_information"
+fileasm.WriteLine "meos_app_end"
+fileasm.WriteLine "udata"
+
+end sub
+
+
+sub codigo
+variable1$=""
+variable2$=""
+variable3$=""
+operador1$=""
+operador2$=""
+operacion$=""
+listbox1_1.AddItems "cod: "+linea$
+if ucase$(rtrim$(ltrim$( field$(linea$," ",1))))=  "IF" then
+cif = cif + 1
+cifa = cifa + 1
+sif(cifa) = cif
+
+
+listbox1_1.AddItems "IF"
+fileasm.WriteLine "; "+linea$
+d$ = lcase$(rtrim$(ltrim$( field$(linea$," ",2))))
+ 
+if tally(d$,".") > 0 then
+ d$= lcase$(rtrim$(ltrim$( field$(d$,".",2))))
+listbox1_1.AddItems "dd$"+d$
+    if d$="caption" OR d$ ="text" THEN
+         variable1$= "regtxt" 'texto
+    else
+         variable1$= "regint" 'integer
+    end if
+end if
+
+ if tally(d$,chr$(34)) > 0 then
+ d$= rtrim$(ltrim$( replacesubstr$(d$,chr$(34),"")))
+ listbox1_1.AddItems d$
+ variable1$= "txt" 'texto
+ else
+if  variable1$= "" then variable1$="regint"'integer
+
+end if
+
+
+d$= lcase$(rtrim$(ltrim$( field$(linea$," ",4))))
+
+if tally(d$,".") > 0 then
+ d$= lcase$(rtrim$(ltrim$( field$(d$,".",2))))
+    if d$="caption" OR D$ ="text" THEN
+         variable2$= "regtxt" 'texto
+    else
+         variable2$= "regint" 'integer
+    end if
+end if
+ if tally(d$,chr$(34)) > 0 then
+ d$= rtrim$(ltrim$( replacesubstr$(d$,chr$(34),"")))
+ listbox1_1.AddItems d$
+ variable2$= "txt" 'texto
+ else
+if  variable2$= "" then variable2$="int"'integer
+
+end if
+
+
+operador1$=lcase$(field$(linea$," ",2))
+operador2$=lcase$(field$(linea$," ",4))
+
+
+if variable1$ = "regint" then
+fileasm.WriteLine ""
+fileasm.WriteLine "mov eax, [" +operador1$ + "]"
+t = 0
+end if
+
+if variable1$ = "int" then
+fileasm.WriteLine ""
+fileasm.WriteLine "mov eax, " + operador1$
+t = 0
+end if
+
+if variable2$ = "regint" then
+fileasm.WriteLine "cmp eax, ["+operador2$+"]"
+t = 0
+end if
+
+if variable2$ = "txt" then
+fileasm.WriteLine ""
+fileasm.WriteLine "movstr ttemp2, "+operador2$
+t = 1
+end if
+
+if variable1$ = "txt" then
+fileasm.WriteLine ""
+fileasm.WriteLine "movstr ttemp1, "+operador1$
+t = 1
+end if
+
+if variable2$ = "regtxt" then
+fileasm.WriteLine ";regtxt"
+fileasm.WriteLine "movstr ttemp2, "+operador2$
+t = 1
+end if
+
+if variable1$ = "regtxt" then
+fileasm.WriteLine ";regtxt"
+fileasm.WriteLine "movstr ttemp1, "+operador1$
+t = 1
+end if
+
+
+if variable2$ = "int" then
+fileasm.WriteLine "cmp eax, "+operador2$
+t = 0
+end if
+
+listbox1_1.AddItems "IF -------"+operador1$+" ("+variable1$+") "+operador2$+" ("+variable2$+")"
+
+if field$(linea$," ",3)= "=" then
+if t = 0 then
+fileasm.WriteLine "  je if_"+str$(sif(cifa))
+fileasm.WriteLine "  jmp else_"+str$(sif(cifa))
+fileasm.WriteLine "  if_"+str$(sif(cifa))+":"
+end if
+if t = 1 then
+fileasm.WriteLine "  cmpstr ttemp1, ttemp2"
+fileasm.WriteLine "  je if_"+str$(sif(cifa))
+fileasm.WriteLine "  jmp else_"+str$(sif(cifa))
+fileasm.WriteLine "  if_"+str$(sif(cifa))+":"
+end if
+
+end if
+
+if field$(linea$," ",3)= "<" then
+end if
+
+if field$(linea$," ",3)= ">" then
+end if
+
+if field$(linea$," ",3)= "=<" then
+end if
+
+if field$(linea$," ",3)= "=>" then
+end if
+
+if field$(linea$," ",3)= "=" then
+end if
+
+exit sub
+end if
+
+if ucase$(rtrim$(ltrim$( field$(linea$," ",1))))=  "FOR" then
+listbox1_1.AddItems "FOR"
+exit sub
+end if
+
+if ucase$(rtrim$(ltrim$( field$(linea$," ",1))))=  "ELSE" then
+listbox1_1.AddItems "else"
+fileasm.WriteLine "jmp end_if" + str$(sif(cifa))
+fileasm.WriteLine "else_" + str$(sif(cifa)) + ":"
+sielse=1
+exit sub
+end if
+
+if ucase$(rtrim$(ltrim$( field$(linea$," ",1))))=  "NEXT" then
+listbox1_1.AddItems "NEXT"
+exit sub
+end if
+
+if ucase$(rtrim$(ltrim$(linea$)))=  "END IF" then
+listbox1_1.AddItems "END IF"
+if sielse=0 then fileasm.WriteLine "else_" + str$(sif(cifa)) + ":"
+sielse = 0
+fileasm.WriteLine "end_if" + str$(sif(cifa)) +":"
+cifa=cifa-1
+exit sub
+end if
+
+if ucase$(rtrim$(ltrim$( field$(linea$," ",2))))=  "=" then
+listbox1_1.AddItems "ASIGNACION: "+linea$
+operacion$="asig"
+d$= lcase$(rtrim$(ltrim$( field$(linea$,"=",1))))
+destino$=d$
+listbox1_1.AddItems "ASIGNACION: "+destino$
+if tally(d$,".") > 0 then
+ d$= lcase$(rtrim$(ltrim$( field$(d$,".",2))))
+    if d$="caption" OR D$ ="text" THEN
+         variable1$= "regtxt" 'texto
+    else
+         variable1$= "regint" 'integer
+    end if
+
+end if
+ if tally(d$,chr$(34)) > 0 then
+ d$= rtrim$(ltrim$( replacesubstr$(d$,chr$(34),"")))
+ listbox1_1.AddItems d$
+ variable1$= "txt" 'texto
+ else
+if  variable1$= "" then variable1$="int"'integer
+
+end if
+
+d$= lcase$(rtrim$(ltrim$( field$(linea$,"=",2))))
+
+if tally(d$,"+") > 0 then   operacion$ = "suma"'suma , 2=resta
+if tally(d$,"-") > 0 then   operacion$ = "resta"
+
+if operacion$ = "suma" then
+operador1$= lcase$(rtrim$(ltrim$( field$(D$,"+",1))))
+operador2$= lcase$(rtrim$(ltrim$( field$(D$,"+",2))))
+end if
+
+if operacion$ ="resta"  then
+operador1$= lcase$(rtrim$(ltrim$( field$(D$,"-",1))))
+operador2$= lcase$(rtrim$(ltrim$( field$(D$,"-",2))))
+end if
+if operacion$="asig" then operador1$=lcase$(rtrim$(ltrim$( field$(linea$,"=",2))))
+listbox1_1.AddItems operacion$, operador1$
+if tally(operador1$,".") > 0 then
+ d$= lcase$(rtrim$(ltrim$( field$(operador1$,".",2))))
+    if d$="caption" OR D$ ="text" THEN
+         variable2$= "regtxt" 'texto
+    else
+         variable2$= "regint" 'integer
+    end if
+end if
+
+if tally(operador1$,chr$(34)) > 0 then
+ d$= rtrim$(ltrim$( replacesubstr$(operador1$,chr$(34),"")))
+ listbox1_1.AddItems d$
+ variable2$= "txt" 'texto
+ else
+if  variable2$= "" then variable2$="int"'integer
+
+end if
+
+
+if tally(operador2$,".") > 0 then
+ d$= lcase$(rtrim$(ltrim$( field$(operador2$,".",2))))
+    if d$="caption" OR D$ ="text" THEN
+         variable3$= "regtxt" 'texto
+    else
+         variable3$= "regint" 'integer
+    end if
+end if
+ if tally(operador2$,chr$(34)) > 0 then
+ d$= rtrim$(ltrim$( replacesubstr$(operador2$,chr$(34),"")))
+ listbox1_1.AddItems d$
+ variable3$= "txt" 'texto
+ else
+if  variable3$= "" then variable3$="int"'integer
+
+end if
+t=0
+listbox1_1.AddItems destino$+" ("+variable1$+") "+" <=> "+operador1$+" ("+variable2$+") < "+operacion$+" > "+operador2$+" ("+variable3$+")"
+
+if operacion$ = "suma" then
+listbox1_1.AddItems linea$
+listbox1_1.AddItems "---------------------------"
+fileasm.WriteLine "; "+linea$
+
+
+IF variable2$="int" then
+fileasm.WriteLine "xor eax,eax"
+fileasm.WriteLine "mov eax,"+operador1$
+end if
+
+IF variable2$="regint" then
+fileasm.WriteLine "xor eax,eax"
+fileasm.WriteLine "mov eax,["+operador1$+"]"
+end if
+
+IF variable3$="int" then
+
+fileasm.WriteLine "add eax,"+operador2$
+end if
+
+IF variable3$="regint" then
+
+fileasm.WriteLine "add eax,["+operador1$+"]"
+end if
+
+if variable2$="txt" then
+t=1
+cktxt = cktxt + 1
+ktxt(cktxt).nombre = "TEXTO_"+str$(cktxt)
+ktxt(cktxt).dato = operador1$
+operador1$= "TEXTO_"+str$(cktxt)
+fileASM.WriteLine "clearw ttemp1"
+fileasm.WriteLine "movstr ttemp1," +operador1$
+ttt=1
+end if
+
+if variable2$="regtxt" then
+fileASM.WriteLine "clearw ttemp1"
+fileasm.WriteLine "movstr ttemp1, "+ operador1$
+t=1
+end if
+
+if variable3$ = "txt"  then
+cktxt = cktxt + 1
+ktxt(cktxt).nombre = "TEXTO_"+str$(cktxt)
+ktxt(cktxt).dato = operador2$
+operador2$="TEXTO_"+str$(cktxt)
+' +  a$
+fileASM.WriteLine "concatword ttemp1,"+operador2$
+t=1
+end if
+
+
+if variable3$ = "regtxt" then
+'fileASM.WriteLine "clearw ttemp1"' +  a$
+fileASM.WriteLine "concatword ttemp1, "+operador2$
+t=1
+end if
+if t= 1 then
+fileasm.WriteLine "clearw "+destino$
+fileasm.WriteLine "movstr "+destino$+" , ttemp1"
+end if
+if t= 0 then
+
+fileasm.WriteLine "mov ["+destino$+"] ,eax"
+end if
+
+end if
+
+ if operacion$ = "resta" then
+listbox1_1.AddItems linea$
+listbox1_1.AddItems "---------------------------"
+fileasm.WriteLine "; "+linea$
+
+
+IF variable2$="int" then
+fileasm.WriteLine "xor eax,eax"
+fileasm.WriteLine "mov eax,"+operador1$
+end if
+
+IF variable2$="regint" then
+fileasm.WriteLine "xor eax,eax"
+fileasm.WriteLine "mov eax,["+operador1$+"]"
+end if
+
+IF variable3$="int" then
+
+fileasm.WriteLine "sub eax,"+operador2$
+end if
+
+IF variable3$="regint" then
+
+fileasm.WriteLine "sub eax,["+operador1$+"]"
+end if
+
+if t= 0 then
+fileasm.WriteLine "mov ["+destino$+"] ,eax"
+end if
+
+end if
+
+
+if operacion$ = "asig" then
+listbox1_1.AddItems variable1$
+listbox1_1.AddItems "---------------------------"
+fileasm.WriteLine "; "+linea$
+
+if variable2$ = "txt" then
+cktxt = cktxt + 1
+ktxt(cktxt).nombre = "TEXTO_"+str$(cktxt)
+ktxt(cktxt).dato = operador1$
+fileASM.WriteLine "clearw " +  destino$
+fileASM.WriteLine "movstr "+ destino$ + ",TEXTO_" + str$(cktxt)
+end if
+
+if variable2$ = "int" then
+fileasm.WriteLine "  mov eax,"+operador1$
+fileasm.WriteLine "  mov ["+ltrim$(destino$)+"],eax"
+end if
+
+if variable2$ = "regint" then
+fileasm.WriteLine "  mov eax,["+operador1$+"]"
+fileasm.WriteLine "  mov ["+ltrim$(destino$)+"],eax"
+end if
+
+if variable2$ = "regtxt" then
+fileASM.WriteLine "clearw " +  destino$
+fileASM.WriteLine "movstr "+ destino$ + " , "+operador1$
+
+end if
+
+end if
+'op destino$,variable1$,operador1$,variable2$,operador2$,variable3$,operacion$
+
+exit sub
+end if
+
+
+end sub
+
+
+function tipovar$(a$)
+end sub
+ 
+Sub Button1_2Click(Sender as QButton)
+run "fasmw.exe "+ edit1_2.text
+'Code here....
+End Sub

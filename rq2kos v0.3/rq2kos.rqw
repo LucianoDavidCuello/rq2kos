@@ -1,0 +1,795 @@
+$Include "Rapidq.inc"
+
+DECLARE FUNCTION donde (dd$, ss$) as integer
+DECLARE FUNCTION nom as string
+declare sub cabecera
+declare sub subs (var$)
+declare sub variables
+declare sub drawwin
+DECLARE SUB DRAWBOTON
+declare sub botones
+declare sub buscasub
+
+type vars
+nombre as string * 255
+tipo as integer
+prt as integer
+end type
+dim dims(200) as vars
+dim cdims as integer
+
+TYPE txttype
+x AS INTEGER
+y AS INTEGER
+TEXTO AS STRING * 50
+col AS STRING * 10
+leng AS INTEGER
+nombre AS STRING * 20
+v as integer
+C AS INTEGER
+END TYPE
+
+const lenn = 50
+
+TYPE formtype
+id AS INTEGER
+nombre AS STRING * 20
+cap AS integer
+CAPTION AS STRING * 255
+framecolor  AS STRING * 8
+bodycolor AS STRING * 8
+TMP1     AS INTEGER
+barcolor AS STRING * 8
+x AS INTEGER
+y AS INTEGER
+x2 AS INTEGER
+y2 AS INTEGER
+cLICK AS INTEGER 'TIENE ONCLICK 0=NO,1=SI
+SUBCLICK AS STRING * 255 'NOMBRE DE LA SUB FUNCTION CLICK
+STYLE AS INTEGER
+v as integer
+END TYPE
+
+
+
+CONST colworkarea = "ffffff"
+CONST barcolor = "5080d0"
+
+DIM  fform(4) AS formtype
+DIM  txt(200) AS formtype
+DIM  boton(200) AS formtype
+dim  edit(200) as formtype
+DIM  CHECKBOX(200) as formtype
+dim  radioboton(200) as formtype
+dim  cradioboton as integer
+dim  ccheckbox as integer
+DIM  var AS INTEGER   '1=form, 2=boton, 3=label, 4=edit, 5=checkbox
+DIM  CFORM AS INTEGER
+DIM  CBOTON AS INTEGER
+DIM  CLABEL AS INTEGER
+DIM CEDIT AS INTEGER
+FFORM(0).V=1
+FFORM(0).STYLE=3
+CFORM=0
+CBOTON=0
+CLABEL=0
+CEDIT=0
+CRADIOBOTON =0
+dim subc as integer
+subc=0
+
+dim archivo as qfilestream
+dim file2 as qfilestream
+if fileexists("a.asm") then kill "a.asm"
+
+file2.Open("a.asm",fmcreate)
+archivo.Open("a.bas", 0)
+
+do
+line$=archivo.ReadLine
+line$=ltrim$(ucase$(line$))
+'print " 1: "+field$(line$," ",1)+" 2: "+field$(line$," ",2)+" 3: "+field$(line$," ",3)+" 4: "+field$(line$," ",4)
+variables
+
+loop until archivo.eof
+archivo.close
+
+cabecera
+
+if subc=1 then
+print "sub funciones"
+subc=0
+
+archivo.Open("a.bas", 0)
+
+do
+line$=archivo.ReadLine
+line$=ltrim$(ucase$(line$))
+
+buscasub
+loop until archivo.eof
+
+archivo.close
+end if
+
+drawwin
+
+file2.Close
+input h
+
+
+
+
+
+FUNCTION donde  (dd$, ss$)
+
+l = LEN(dd$)
+FOR t = 1 TO l
+IF MID$(dd$, t, LEN(ss$)) = ss$ THEN
+donde = t
+EXIT FOR
+END IF
+NEXT t
+
+END FUNCTION
+
+sub variables
+
+
+if field$(line$," ",1)="CREATE" THEN ' PRINT "CREADO ------------"
+ tipo$= ltrim$(field$(line$,"AS",2))
+ PRINT
+ print "Creando..."
+
+  if tipo$="QFORM" THEN
+    print "Qform..."
+    CFOrM=CFORM+1
+    FFORM(CFORM).nombre = nom
+    Print "Nombre: "+fform(cform).nombre
+    var=1
+  END IF
+
+  if tipo$="QEDIT" THEN
+    print "EDIT..."
+    CEDIT=CEDIT+1
+    EDIT(CEDIT).nombre = nom
+    Print "Nombre: "+EDIT(CEDIT).nombre
+    var=4
+  END IF
+
+  if tipo$="QLABEL" THEN
+    print "LABEL..."
+    CLABEL=CLABEL+1
+    TXT(CLABEL).nombre = nom
+    Print "Nombre: "+TXT(cLABEL).nombre
+    var=3
+  END IF
+  if tipo$="QBUTTON" THEN
+    print "BUTTON..."
+    CBOTON=CBOTON+1
+    BOTON(CBOTON).nombre = nom
+    Print "Nombre: "+BOTON(cBOTON).nombre
+    var=2
+  END IF
+  if tipo$="QCHECKBOX" THEN
+    print "CHECKBOX..."
+    CCHECKBOX=CCHECKBOX+1
+    CHECKBOX(CCHECKBOX).nombre = nom
+    Print "Nombre: "+CHECKBOX(CCHECKBOX).nombre
+    var=5
+  END IF
+  if tipo$="QRADIOBUTTON" THEN
+    print "RADIOBOTON..."
+    CRADIOBOTON=CRADIOBOTON+1
+    RADIOBOTON(CRADIOBOTON).nombre = nom
+    Print "Nombre: "+RADIOBOTON(CRADIOBOTON).nombre
+    var=6
+  END IF
+
+END IF
+
+DD$= RTRIM$(field$(line$,"=",1))
+
+if DD$ = "CAPTION" OR DD$="TEXT" THEN
+GG$= LTRIM$(field$(line$,"=",2))
+GG$= RTRIM$(GG$)
+GG$= LEFT$(GG$,LEN(GG$)-1)
+GG$= RIGHT$(GG$,LEN(GG$)-1)
+PRINT "TEXTO <"+GG$+">"
+FFORM(0).caption = GG$
+FFORM(0).cap = LEN(GG$)
+END IF
+
+if DD$ = "TOP" THEN
+GG$= LTRIM$(field$(line$,"=",2))
+PRINT "y <"+GG$+">"
+FFORM(0).y = VAL(GG$)
+PRINT FFORM(0).X
+END IF
+
+if DD$ = "LEFT" THEN
+GG$= LTRIM$(field$(line$,"=",2))
+PRINT "x <"+GG$+">"
+FFORM(0).x = VAL(GG$)
+END IF
+
+if DD$ = "WIDTH" THEN
+GG$= LTRIM$(field$(line$,"=",2))
+PRINT "x2 <"+GG$+">"
+FFORM(0).x2 = VAL(GG$)
+END IF
+
+if DD$ = "HEIGHT" THEN
+GG$= LTRIM$(field$(line$,"=",2))
+PRINT "y2 <"+GG$+">"
+FFORM(0).y2 = VAL(GG$)
+END IF
+
+if DD$ = "COLOR" THEN
+GG$= LTRIM$(field$(line$,"=",2))
+PRINT "COLOR <"+GG$+">"
+FFORM(0).BARCOLOR = GG$
+END IF
+
+if DD$ = "VISIBLE" THEN
+GG$= LTRIM$(field$(line$,"=",2))
+PRINT "VISIBLE <"+GG$+">"
+FFORM(0).V = VAL(GG$)
+END IF
+
+if DD$ = "CHECKED" THEN
+GG$= LTRIM$(field$(line$,"=",2))
+PRINT "CHECKED <"+GG$+">"
+IF gg$="TRUE" OR GG$="1" THEN
+FFORM(0).TMP1 =1
+ELSE
+FFORM(0).TMP1=0
+END IF
+END IF
+
+if DD$ = "BORDERSTYLE" THEN
+GG$= LTRIM$(field$(line$,"=",2))
+PRINT "ESTILO <"+GG$+">"
+FFORM(0).STYLE=3
+IF GG$ = "BSNONE" THEN FFORM(0).STYLE = 1              '-- No visible border line, Not resizeable
+IF GG$ = "BSSINGLE" THEN FFORM(0).STYLE= 0            '-- Single-line border, Not resizeable
+IF GG$ = "BSSIZEABLE" THEN FFORM(0).STYLE= 3          '-- Standard resizeable border
+IF GG$ = "BSDIALOG" THEN FFORM(0).STYLE= 2            '-- Dialog, not resizeable
+IF GG$ = "BSTOOLWINDOW" THEN FFORM(0).STYLE= 4        '-- like bsSingle but with a smaller caption
+IF GG$ = "BSSIZETOOLWIN" THEN FFORM(0).STYLE= 2       '-- like bsSizeable with a smaller caption
+END IF
+
+if DD$ = "ONCLICK" THEN
+GG$= LTRIM$(field$(line$,"=",2))
+PRINT "ON CLICK <"+GG$+">"
+FFORM(0).CLICK=1
+FFORM(0).SUBCLICK = GG$
+END IF
+
+
+IF LTRIM$(LINE$)="END CREATE" AND VAR>0 THEN
+PRINT "GUARDA VARIABLES....TIPO: "+STR$(VAR)
+SELECT CASE VAR
+case 1
+  FFORM(CFORM).caption = FFORM(0).CAPTION
+  FFORM(CFORM).cap = FFORM(0).CAP
+  FFORM(CFORM).X = FFORM(0).X
+  FFORM(CFORM).Y = FFORM(0).Y
+  FFORM(CFORM).X2 = FFORM(0).X2
+  FFORM(CFORM).Y2 = FFORM(0).Y2
+  FFORM(CFORM).V = FFORM(0).V
+  FFORM(CFORM).BARCOLOR = FFORM(0).BARCOLOR
+  FFORM(CFORM).ID = CFORM
+  FFORM(CFORM).STYLE = FFORM(0).STYLE
+  FFORM(CFORM).CLICK=FFORM(0).CLICK
+  FFORM(CFORM).SUBCLICK=FFORM(0).SUBCLICK
+
+
+case 2
+  BOTON(CBOTON).caption = FFORM(0).CAPTION
+  BOTON(CBOTON).cap = FFORM(0).CAP
+  BOTON(CBOTON).X = FFORM(0).X
+  BOTON(CBOTON).Y = FFORM(0).Y
+  BOTON(CBOTON).X2 = FFORM(0).X2
+  BOTON(CBOTON).Y2 = FFORM(0).Y2
+  BOTON(CBOTON).V = FFORM(0).V
+  BOTON(CBOTON).BARCOLOR = FFORM(0).BARCOLOR
+  BOTON(CBOTON).ID = CBOTON+1
+  BOTON(CBOTON).STYLE = FFORM(0).STYLE
+  BOTON(CBOTON).CLICK=FFORM(0).CLICK
+  BOTON(CBOTON).SUBCLICK=FFORM(0).SUBCLICK
+  print boton(cboton).caption
+
+
+case 3
+  TXT(CLABEL).caption = FFORM(0).CAPTION
+  TXT(CLABEL).cap = FFORM(0).CAP
+  TXT(CLABEL).X = FFORM(0).X
+  TXT(CLABEL).Y = FFORM(0).Y
+  TXT(CLABEL).X2 = FFORM(0).X2
+  TXT(CLABEL).Y2 = FFORM(0).Y2
+  TXT(CLABEL).V = FFORM(0).V
+  TXT(CLABEL).BARCOLOR = FFORM(0).BARCOLOR
+  TXT(CLABEL).ID = CLABEL
+  TXT(CLABEL).STYLE = FFORM(0).STYLE
+  TXT(CLABEL).CLICK=FFORM(0).CLICK
+  TXT(CLABEL).SUBCLICK=FFORM(0).SUBCLICK
+
+case 4
+  EDIT(CEDIT).caption = FFORM(0).CAPTION
+  EDIT(CEDIT).cap = FFORM(0).CAP
+  EDIT(CEDIT).X = FFORM(0).X
+  EDIT(CEDIT).Y = FFORM(0).Y
+  EDIT(CEDIT).X2 = FFORM(0).X2
+  EDIT(CEDIT).Y2 = FFORM(0).Y2
+  EDIT(CEDIT).V = FFORM(0).V
+  EDIT(CEDIT).BARCOLOR = FFORM(0).BARCOLOR
+  EDIT(CEDIT).ID = CEDIT
+  EDIT(CEDIT).STYLE = FFORM(0).STYLE
+  EDIT(CEDIT).CLICK=FFORM(0).CLICK
+  EDIT(CEDIT).SUBCLICK=FFORM(0).SUBCLICK
+
+case 5
+  CHECKBOX(CCHECKBOX).caption = FFORM(0).CAPTION
+  CHECKBOX(CCHECKBOX).cap = FFORM(0).CAP
+  CHECKBOX(CCHECKBOX).X = FFORM(0).X
+  CHECKBOX(CCHECKBOX).Y = FFORM(0).Y
+  CHECKBOX(CCHECKBOX).X2 = FFORM(0).X2
+  CHECKBOX(CCHECKBOX).Y2 = FFORM(0).Y2
+  CHECKBOX(CCHECKBOX).V = FFORM(0).V
+   CHECKBOX(CCHECKBOX).TMP1 = FFORM(0).TMP1
+  CHECKBOX(CCHECKBOX).BARCOLOR = FFORM(0).BARCOLOR
+  CHECKBOX(CCHECKBOX).ID = CEDIT
+  CHECKBOX(CCHECKBOX).STYLE = FFORM(0).STYLE
+  CHECKBOX(CCHECKBOX).CLICK=FFORM(0).CLICK
+  CHECKBOX(CCHECKBOX).SUBCLICK=FFORM(0).SUBCLICK
+case 6
+RADIOBOTON(CRADIOBOTON).caption = FFORM(0).CAPTION
+RADIOBOTON(CRADIOBOTON).cap = FFORM(0).CAP
+print RADIOBOTON(CRADIOBOTON).cap
+RADIOBOTON(CRADIOBOTON).X = FFORM(0).X
+RADIOBOTON(CRADIOBOTON).Y = FFORM(0).Y
+RADIOBOTON(CRADIOBOTON).X2 = FFORM(0).X2
+RADIOBOTON(CRADIOBOTON).Y2 = FFORM(0).Y2
+RADIOBOTON(CRADIOBOTON).V = FFORM(0).V
+RADIOBOTON(CRADIOBOTON).TMP1 = FFORM(0).TMP1
+RADIOBOTON(CRADIOBOTON).BARCOLOR = FFORM(0).BARCOLOR
+RADIOBOTON(CRADIOBOTON).ID = CRADIOBOTON
+RADIOBOTON(CRADIOBOTON).STYLE = FFORM(0).STYLE
+RADIOBOTON(CRADIOBOTON).CLICK=FFORM(0).CLICK
+RADIOBOTON(CRADIOBOTON).SUBCLICK=FFORM(0).SUBCLICK
+
+end select
+VAR=0
+FFORM(0).V=1
+FFORM(0).CLICK=0
+FFORM(0).SUBCLICK=SPACE$(255)
+fform(0).barcolor= "0x00ffffff"
+fform(0).tmp1=0
+END IF
+
+gg$= fieLd$(line$," ",1)
+if gg$="SUB" THEN
+gg$=line$
+gg$=replacesubstr$(gg$,"("," ")
+dd$=fieLd$(gg$," ",2)
+PRINT "SUB "+dd$
+subc=1
+END IF
+
+end sub
+
+function nom
+aa = donde(line$, "CREATE ")
+bb = donde(line$, "AS ")
+nom =MID$(linE$, aa + LEN("create "), bb - aa - LEN("create "))
+end function
+
+SUB cabecera
+file2.WriteLine "; RQ2Fasm Kolibrios"
+file2.WriteLine "; Autor: NeoTEC 2009  - Luciano David Cuello -santa fe- ARGENTINA "
+file2.WriteLine "; Mail: jackerscomp2002@yahoo.com.ar"
+file2.WriteLine "; Compilar con FASM para Kolibri OS "
+file2.WriteLine ""
+file2.WriteLine "include 'rq2kos.inc'"
+file2.WriteLine ""
+
+file2.WriteLine "use32"
+file2.WriteLine "  meos_app_start"
+if cedit > 0 then file2.WriteLine "include 'editbox.inc'"
+if ccheckbox > 0 then
+ file2.WriteLine "include 'check.inc'"
+ file2.WriteLine "  version_ch1 "
+ file2.WriteLine "  use_check_box "
+end if
+if cedit > 0 then file2.WriteLine "  use_edit_box procinfo,22,5"
+if cradioboton > 0 then
+
+file2.WriteLine "   include 'optionbox.inc'"
+file2.WriteLine "   version_op"
+file2.WriteLine "   use_option_box"
+
+end if
+file2.WriteLine "  align 4"
+file2.WriteLine "code"
+file2.WriteLine "     mov eax,48"
+file2.WriteLine "     mov ebx,3"
+file2.WriteLine "     mov ecx,sc"
+file2.WriteLine "     mov edx, sizeof.system_colors"
+file2.WriteLine "     mcall"
+file2.WriteLine ""
+file2.WriteLine "     mov eax, 40"
+file2.WriteLine "     mov ebx,0x25"
+file2.WriteLine "     mcall"
+
+file2.WriteLine "	mcall	40,0x27"
+file2.WriteLine "START:"
+file2.WriteLine "     call draw_window"
+file2.WriteLine "still:"
+file2.WriteLine ""
+file2.WriteLine "    mcall  10                 ; wait here for event"
+file2.WriteLine ""
+file2.WriteLine "    cmp  eax,1                  ; redraw request ?"
+file2.WriteLine "    je red"
+file2.WriteLine "    cmp  eax,2                  ; key in buffer ?"
+file2.WriteLine "    je   key"
+file2.WriteLine "    cmp  eax,3                  ; button in buffer ?"
+file2.WriteLine "    je button"
+file2.WriteLine ""
+if cedit > 0 then file2.WriteLine "   mouse_edit_boxes editboxes,editboxes_end "
+if ccheckbox > 0 then file2.WriteLine "   mouse_check_boxes check_boxes,check_boxes_end"
+if cradioboton > 0 then file2.WriteLine " mouse_option_boxes option_boxes,option_boxes_end"
+file2.WriteLine "    jmp still"
+file2.WriteLine ""
+file2.WriteLine "  red:                          ; redraw"
+file2.WriteLine "    call draw_window"
+file2.WriteLine "    jmp still"
+file2.WriteLine ""
+file2.WriteLine "  key:                          ; key"
+file2.WriteLine "    mcall 2                  ; just read it and ignore"
+if cedit > 0 then file2.WriteLine "      key_edit_boxes editboxes,editboxes_end"
+file2.WriteLine "    jmp still"
+file2.WriteLine ""
+file2.WriteLine "  button:                       ; button"
+file2.WriteLine "    mcall 17                 ; get id"
+file2.WriteLine ""
+file2.WriteLine "    cmp  ah,1                   ; button id=1 ?"
+file2.WriteLine "    jne noclose"
+file2.WriteLine ""
+file2.WriteLine "    mcall -1                 ; close this program"
+
+file2.WriteLine "noclose:"
+file2.WriteLine ""
+botones
+END SUB
+
+sub botones
+for t = 1 to cboton
+
+if boton(t).click= 1 then
+file2.WriteLine ";  "+boton(t).nombre
+file2.WriteLine "    cmp  ah,"+ str$(boton(t).id) + " ;ID BOTON               '    ; button id=1 ?"
+file2.WriteLine "    je   "+ rtrim$(boton(t).subclick)
+file2.WriteLine " "
+end if
+
+next t
+
+'file2.WriteLine "   outcount dword [lives],250,8,0x10ddeeff,65536"
+file2.WriteLine "   jmp still"
+end sub
+
+sub drawwin
+file2.WriteLine ""
+file2.WriteLine "draw_window:"
+file2.WriteLine "   mcall 12,1"
+file2.WriteLine "   mcall 0,("+STR$(FFORM(1).X)+"*65536+"+STR$(FFORM(1).x2+20)+"),("+STR$(FFORM(1).y)+"*65536+"+STR$(FFORM(1).y2+20)+"),0x3"+str$(FFORM(1).STYLE)+"AABBCC,0x805080DD,"+rtrim$(FFORM(1).NOMBRE)+"_CAPTION" 'hed"
+DRAWBOTON
+
+end sub
+
+SUB DRAWBOTON
+
+
+FOR te = 1 TO cboton
+l$ = STR$(te)
+lb$ = "boton_" + l$ 'RIGHT$(l$, LEN(l$) - 1)
+file2.WriteLine""
+file2.WriteLine "    ;Boton : <" + boton(te).nombre + " >"
+file2.WriteLine "   boton "+lb$+"x,"+lb$+"y,"+lb$+"x2,"+lb$+"y2,"+lb$+"i,"+lb$+"t,"+lb$+"c,"+lb$+"v"
+
+next te
+
+FOR te = 1 TO clabel
+
+l$ = STR$(te)
+lb$ = "labelt_" + l$ 'RIGHT$(l$, LEN(l$) - 1)
+file2.WriteLine ""
+file2.WriteLine ";Label de < " +txt(te).nombre + ">"
+file2.WriteLine " plabel  "+lb$+"x,"+lb$+"y, "+lb$+"t,cl_Black,0"
+
+
+next te
+
+if ccheckbox > 1 then
+for t = 1 to ccheckbox
+l$ = STR$(t)
+lb$ = "checkbox_" + l$ 'RIGHT$(l$, LEN(l$) - 1)
+
+
+file2.WriteLine ";check box"
+file2.WriteLine "     mov eax,["+lb$+"x]"
+file2.WriteLine "     mov [ch"+str$(t)+".left], ax"
+file2.WriteLine "     mov eax,["+lb$+"y]
+file2.WriteLine "     mov [ch"+str$(t)+".top], ax"
+
+next t
+
+file2.WriteLine "   draw_check_boxes check_boxes,check_boxes_end"
+end if
+
+if cedit >0 then
+
+for t = 1 to cedit
+l$ = STR$(t)
+lb$ = "edit_" + l$ 'RIGHT$(l$, LEN(l$) - 1)
+
+
+file2.WriteLine ";edit box"
+file2.WriteLine "     mov eax,["+lb$+"x]"
+file2.WriteLine "     mov [edit"+str$(t)+".left], eax"
+file2.WriteLine "     mov eax,["+lb$+"y]
+file2.WriteLine "     mov [edit"+str$(t)+".top], eax"
+
+next t
+file2.WriteLine "   draw_edit_boxes editboxes,editboxes_end,use_f9,procinfo"
+end if
+if cradioboton > 0 then
+
+for t = 1 to cradioboton
+l$ = STR$(t)
+lb$ = "radioboton_" + l$ 'RIGHT$(l$, LEN(l$) - 1)
+
+
+file2.WriteLine ";radio_boton"
+file2.WriteLine "     mov eax,["+lb$+"x]"
+file2.WriteLine "     mov [op"+str$(t)+".left], ax"
+file2.WriteLine "     mov eax,["+lb$+"y]
+file2.WriteLine "     mov [op"+str$(t)+".top], ax"
+next t
+file2.WriteLine "draw_option_boxes option_boxes,option_boxes_end"
+end if
+file2.WriteLine ""
+file2.WriteLine "   mcall 12,2"
+file2.WriteLine "   ret"
+file2.WriteLine ""
+file2.WriteLine ";Variables-Datos"
+file2.WriteLine ""
+file2.WriteLine rtrim$(FFORM(1).NOMBRE)+"_CAPTION db '"+FFORM(1).caption+"',0"
+file2.WriteLine "addr dd 0x0"
+file2.WriteLine "string_length dd 0x0"
+file2.WriteLine "temp1  dd  0"
+file2.WriteLine "temp2  dd  0"
+ file2.WriteLine "ttemp1 db 0"
+file2.WriteLine "  rb  255"
+file2.WriteLine "ttemp2 db 0"
+file2.WriteLine "  rb  255"
+
+file2.WriteLine "temp  dd  0"
+file2.WriteLine "string_x       dd    0"
+file2.WriteLine "string_y       dd    0"
+file2.WriteLine "lives dd 5"
+file2.WriteLine "editboxes:"
+
+for t= 1 to cedit
+if t=1 then
+hh$=",ed_focus,200,0"
+else
+hh$=",0,200,0"
+end if
+file2.WriteLine "edit"+str$(t)+" edit_box "+str$(edit(t).x2)+","+str$(edit(t).x)+","+str$(edit(t).y+20)+",0xffffff,0x6a9480,0,0xAABBCC,0,255,edit_"+str$(t)+"t"+hh$
+
+next t
+file2.WriteLine "editboxes_end:"
+if ccheckbox > 0 then
+file2.WriteLine "check_boxes:"
+
+
+for t= 1 to cCHECKBOX
+
+if checkbox(t).TMP1=1 then
+hh$=","+str$(checkbox(t).cap)+",ch_flag_en"
+else
+hh$=","+str$(checkbox(t).cap)
+END IF
+
+file2.WriteLine "ch"+str$(t)+" check_box1 0,0,checkbox_"+str$(t)+"t"+hh$'ch_text.1,ch_text.e1-ch_text.1,ch_flag_en
+next t
+
+file2.WriteLine "check_boxes_end:"
+file2.WriteLine ""
+end if
+if cradioboton > o then
+file2.WriteLine "option_boxes:"
+
+
+for t= 1 to cradioboton
+
+hh$=","+str$(radioboton(t).cap)
+file2.WriteLine "op"+str$(t)+" option_box option_group1,0,0,0xffffff,0,0,radioboton_"+str$(t)+"t"+hh$
+next t
+file2.WriteLine "option_boxes_end:"
+
+nn=1
+for t = 1 to cradioboton
+if radioboton(t).tmp1=1 then nn=t
+print radioboton(t).tmp1
+next t
+
+file2.WriteLine "option_group1	dd op"+str$(nn)
+end if
+file2.WriteLine "data_of_code dd 0"
+file2.WriteLine "mouse_flag dd 0x0"
+
+for ttt= 1 to  clabel
+l$ = STR$(ttt)
+lb$ = "labelt_" + l$ 'RIGHT$(l$, LEN(l$) - 1)
+
+file2.WriteLine ""
+file2.WriteLine ";"+lb$
+file2.WriteLine lb$+"v dd "+str$(txt(ttt).v)
+file2.WriteLine lb$+"x dd "+str$(int(txt(ttt).x))
+file2.WriteLine lb$+"y dd "+str$(int(txt(ttt).y)+20)
+file2.WriteLine lb$+"c dd 0x000000"
+file2.WriteLine lb$+"l dd "+str$(txt(ttt).cap)
+file2.WriteLine lb$+"lm dd 255"
+ddd$=rtrim$(txt(ttt).caption)
+file2.WriteLine lb$+"t db '"+ddd$+"',0"
+file2.WriteLine "          rb 255-"+str$(len(ddd$))
+
+next ttt
+
+for ttt= 1 to  cedit
+l$ = STR$(ttt)
+lb$ = "edit_" + l$ 'RIGHT$(l$, LEN(l$) - 1)
+
+file2.WriteLine ""
+file2.WriteLine ";"+lb$
+file2.WriteLine lb$+"v dd "+str$(edit(ttt).v)
+file2.WriteLine lb$+"x dd "+str$(int(edit(ttt).x))
+file2.WriteLine lb$+"y dd "+str$(int(edit(ttt).y)+20)
+file2.WriteLine lb$+"c dd 0x000000"
+file2.WriteLine lb$+"l dd "+str$(edit(ttt).cap)
+file2.WriteLine lb$+"lm dd 255"
+
+ddd$=rtrim$(edit(ttt).caption)
+file2.WriteLine lb$+"t db '"+ddd$+"',0"
+file2.WriteLine "          rb 255-"+str$(len(ddd$))
+
+next ttt
+
+for ttt= 1 to  ccheckbox
+l$ = STR$(ttt)
+lb$ = "checkbox_" + l$ 'RIGHT$(l$, LEN(l$) - 1)
+ddd$=rtrim$(checkbox(ttt).caption)
+
+file2.WriteLine ""
+file2.WriteLine ";"+lb$
+file2.WriteLine lb$+"v dd "+str$(checkbox(ttt).v)
+file2.WriteLine lb$+"x dd "+str$(int(checkbox(ttt).x))
+file2.WriteLine lb$+"y dd "+str$(int(checkbox(ttt).y)+20)
+file2.WriteLine lb$+"c dd 0x000000"
+file2.WriteLine lb$+"l dd "+str$(checkbox(ttt).cap)
+file2.WriteLine lb$+"lm dd 255"
+file2.WriteLine lb$+"t db '"+ddd$+"',0"
+file2.WriteLine "          rb 255-"+str$(len(ddd$))
+
+
+next ttt
+for ttt= 1 to  cradioboton
+l$ = STR$(ttt)
+lb$ = "radioboton_" + l$ 'RIGHT$(l$, LEN(l$) - 1)
+
+file2.WriteLine ""
+file2.WriteLine ";"+lb$
+file2.WriteLine lb$+"v dd "+str$(radioboton(ttt).v)
+file2.WriteLine lb$+"x dd "+str$(int(radioboton(ttt).x))
+file2.WriteLine lb$+"y dd "+str$(int(radioboton(ttt).y)+20)
+file2.WriteLine lb$+"c dd 0x000000"
+file2.WriteLine lb$+"l dd "+str$(radioboton(ttt).cap)
+file2.WriteLine lb$+"lm dd 255"
+ddd$=rtrim$(radioboton(ttt).caption)
+file2.WriteLine lb$+"t db '"+ddd$+"',0"
+file2.WriteLine "          rb 255-"+str$(len(ddd$))
+
+next ttt
+
+for tttb= 1 to cboton
+l$ = STR$(tttb)
+lb$ = "boton_" + l$ 'RIGHT$(l$, LEN(l$) - 1)
+
+file2.WriteLine ""
+file2.WriteLine ";"+lb$
+file2.WriteLine lb$+"i dd "+str$(boton(tttb).id)
+file2.WriteLine lb$+"v dd "+str$(boton(tttb).v)
+file2.WriteLine lb$+"x dd "+str$(int(boton(tttb).x))
+file2.WriteLine lb$+"y dd "+str$(int(boton(tttb).y)+20)
+file2.WriteLine lb$+"x2 dd "+str$(int(boton(tttb).x2))
+file2.WriteLine lb$+"y2 dd "+str$(int(boton(tttb).y2)-5)
+file2.WriteLine lb$+"c dd 0xaabbcc"
+file2.WriteLine lb$+"l dd "+str$(boton(tttb).cap)
+file2.WriteLine lb$+"lm dd 255"
+
+ddd$=rtrim$(boton(tttb).caption)
+file2.WriteLine lb$+"t db '"+ddd$+"',0"
+file2.WriteLine "          rb 255-"+str$(len(ddd$))
+
+print boton(tttd).caption
+
+next tttb
+
+file2.WriteLine "sc system_colors"
+file2.WriteLine "align 16"
+file2.WriteLine "procinfo process_information"
+file2.WriteLine "meos_app_end"
+file2.WriteLine "udata"
+END SUB
+
+
+
+sub buscasub
+
+gg$= fieLd$(line$," ",1)
+if gg$="SUB" THEN
+gg$=line$
+gg$=replacesubstr$(gg$,"("," ")
+dd$=fieLd$(gg$," ",2)
+PRINT "SUB "+dd$ +"------------------------"
+subc=1
+file2.WriteLine ""
+file2.WriteLine ";Sub "dd$
+file2.WriteLine dd$+":"
+exit sub
+END IF
+
+gg$=rtrim$(ltrim$(line$))
+if gg$="END SUB" then
+print "end sub"
+file2.WriteLine ""
+file2.WriteLine "     jmp red  ;end sub"
+file2.WriteLine " "
+subc=0
+exit sub
+end if
+
+'**************************************
+'
+'Poner codigo en busca de comandos aqui
+'
+'**************************************
+gg$= fieLd$(rtrim$(line$)," ",1)
+if subc=1 then
+
+if gg$= "IF" then
+print "if...."
+end if
+if gg$= "FOR" then
+print "for...."
+end if
+if gg$= "END" then
+print "end ?"
+end if
+if gg$= "NEXT" then
+print "NEXT...."
+end if
+
+
+
+print gg$
+
+end if
+end sub
+
+sub subs (var$)
+
+end sub
